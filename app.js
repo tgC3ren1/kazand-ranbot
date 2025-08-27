@@ -46,66 +46,156 @@ const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
 const center = { x: canvas.width/2, y: canvas.height/2 };
 let wheelAngle = 0;
-const colors = ["#2d6cdf","#5b8cff","#8aa9ff","#2e3b6b"];
 
+/* Daha zengin renk paleti */
+const colors = [
+  "#4f7cff","#7aa2ff","#3b5bd6","#263fa3",
+  "#34b3a0","#5ad1bf","#228a7b","#17635a"
+];
+
+/* Ses: kısa bir “tick” (isteğe bağlı). tick.mp3 koyarsan otomatik çalar. */
+let tickSound = null;
+try {
+  tickSound = new Audio("./tick.mp3"); // 80–120ms kısa ses önerilir
+  tickSound.volume = 0.5;
+} catch (_) { /* sessiz mod */ }
+
+function playTick() {
+  if (!tickSound) return;
+  try { tickSound.currentTime = 0; tickSound.play(); } catch (_) {}
+}
+
+/* Yüksek kalite çizim */
 function drawWheel(angle = 0) {
   const n = WHEEL_SEGMENTS.length;
   const step = (Math.PI*2)/n;
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // dış gölge
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.45)";
+  ctx.shadowBlur = 22;
+  ctx.shadowOffsetY = 8;
+
+  // dış çerçeve (altın halka)
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, 185, 0, Math.PI*2);
+  ctx.fillStyle = "#0c1222";
+  ctx.fill();
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = "#ffd54d";
+  ctx.stroke();
+  ctx.restore();
+
+  // dilimler
   for (let i=0;i<n;i++){
     const start = i*step + angle;
     const end = start + step;
+
+    // gradient
+    const grad = ctx.createLinearGradient(
+      center.x + Math.cos(start)*160, center.y + Math.sin(start)*160,
+      center.x + Math.cos(end)*160,   center.y + Math.sin(end)*160
+    );
+    grad.addColorStop(0, colors[i % colors.length]);
+    grad.addColorStop(1, "#0b1330");
+
     ctx.beginPath();
     ctx.moveTo(center.x, center.y);
     ctx.arc(center.x, center.y, 170, start, end);
     ctx.closePath();
-    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillStyle = grad;
     ctx.fill();
 
+    // iç ayırıcı çizgi
+    ctx.strokeStyle = "rgba(255,255,255,.15)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, 170, end, end+0.001);
+    ctx.stroke();
+
+    // label
     ctx.save();
     ctx.translate(center.x, center.y);
     ctx.rotate(start + step/2);
     ctx.textAlign = "right";
-    ctx.fillStyle = "#fff";
-    ctx.font = "16px system-ui";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.shadowColor = "rgba(0,0,0,.35)";
+    ctx.shadowBlur = 6;
     ctx.fillText(WHEEL_SEGMENTS[i].label, 150, 6);
     ctx.restore();
   }
 
-  // pointer
+  // merkez kapak
   ctx.beginPath();
-  ctx.moveTo(center.x, center.y-180);
-  ctx.lineTo(center.x-10, center.y-200);
-  ctx.lineTo(center.x+10, center.y-200);
-  ctx.closePath();
-  ctx.fillStyle = "#ffda6a";
+  ctx.arc(center.x, center.y, 48, 0, Math.PI*2);
+  const capGrad = ctx.createRadialGradient(center.x, center.y, 6, center.x, center.y, 48);
+  capGrad.addColorStop(0, "#ffffff");
+  capGrad.addColorStop(1, "#c7d1ff");
+  ctx.fillStyle = capGrad;
   ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#7aa2ff";
+  ctx.stroke();
+
+  // pointer (sabit üçgen – üstte)
+  ctx.beginPath();
+  ctx.moveTo(center.x, center.y-198);
+  ctx.lineTo(center.x-16, center.y-226);
+  ctx.lineTo(center.x+16, center.y-226);
+  ctx.closePath();
+  ctx.fillStyle = "#ff5959";
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#fff";
+  ctx.stroke();
+
+  // pointer taban daire
+  ctx.beginPath();
+  ctx.arc(center.x, center.y-206, 8, 0, Math.PI*2);
+  ctx.fillStyle = "#ffe082";
+  ctx.fill();
+  ctx.strokeStyle = "#fff";
+  ctx.stroke();
 }
 
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 
+/* Yavaşlayarak durma + segment geçişinde “tick” */
 async function animateToSegment(index) {
   const n = WHEEL_SEGMENTS.length;
   const step = (Math.PI*2)/n;
+
+  // hedef açı (pointer üstte, -90° ekseni)
   const targetAngle = (Math.PI/2) - (index*step + step/2);
-  const rotations = Math.PI*2*5;
+
+  const rotations = Math.PI*2 * 5.5; // 5.5 tur
   const startAngle = wheelAngle;
-  const endAngle = targetAngle + rotations;
-  const duration = 2600;
+  const endAngle   = targetAngle + rotations;
+  const duration   = 4200;
+
   let startTime;
+  // tick için son görülen dilim
+  let lastTick = -1;
 
   return new Promise((resolve)=>{
-    function tick(ts){
+    function raf(ts){
       if(!startTime) startTime = ts;
       const t = Math.min(1, (ts-startTime)/duration);
       const eased = easeOutCubic(t);
       wheelAngle = startAngle + (endAngle-startAngle)*eased;
+
+      // tick: pointer altından geçen aktif dilim
+      const current = ( ( (Math.PI*2) - (wheelAngle % (Math.PI*2)) + Math.PI/2 ) / step ) % n;
+      const idx = Math.floor(current);
+      if (idx !== lastTick) { playTick(); lastTick = idx; }
+
       drawWheel(wheelAngle);
-      if(t<1) requestAnimationFrame(tick);
+      if(t < 1) requestAnimationFrame(raf);
       else resolve();
     }
-    requestAnimationFrame(tick);
+    requestAnimationFrame(raf);
   });
 }
 
@@ -241,7 +331,7 @@ async function purchaseItem(itemId){
   }
 }
 
-/* ========= Spin handler (with JWT) ========= */
+/* ========= Spin handler ========= */
 async function handleSpin(){
   const { data: { session } } = await supa.auth.getSession();
   if(!session){ loginModal.showModal(); return; }
@@ -278,7 +368,7 @@ async function handleSpin(){
   }
 }
 
-/* ========= Event handlers ========= */
+/* ========= Events ========= */
 openRegister?.addEventListener("click", ()=>registerModal.showModal());
 openLogin?.addEventListener("click", ()=>loginModal.showModal());
 
