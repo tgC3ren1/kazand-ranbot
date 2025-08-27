@@ -1,0 +1,34 @@
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans',sans-serif;background:#0b1220;color:#e8ecf1}
+.container{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between}
+.brand h1{margin:0;font-size:28px}
+.brand p{margin:2px 0 0;color:#9bb0c5}
+nav .btn{margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:#121a2b;border:1px solid #202a40;border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.btn{background:#1d6df7;border:none;color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer}
+.btn.ghost{background:transparent;border:1px solid #324669;color:#bfd2ec}
+.btn.danger{background:#f44336}
+.btn.primary{background:#4f7cff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.pill{display:inline-block;background:#0f274a;border:1px solid #21406e;border-radius:999px;padding:6px 10px;margin-left:10px}
+.result{min-height:24px;color:#d7ff9a;margin-top:8px}
+.lb{list-style:decimal;padding-left:20px}
+.lb li{padding:4px 0;border-bottom:1px dashed #25324a}
+.market{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.item{background:#0f1626;border:1px solid #1f2a44;border-radius:12px;padding:12px}
+.item h4{margin:0 0 6px}
+.item p{margin:4px 0}
+.item button{width:100%}
+dialog::backdrop{background:rgba(0,0,0,.55)}dialog{border:none;border-radius:16px;padding:0}
+.modal{background:#0f1626;border:1px solid #22304d;padding:16px 16px 10px;border-radius:16px;width:min(92vw,420px)}
+.modal h3{margin:0 0 10px}
+.modal label{display:block;font-size:14px;margin:10px 0}
+.modal input{width:100%;padding:10px;border-radius:10px;border:1px solid #2a3b5e;background:#0a1120;color:#e8ecf1}
+.modal-actions{display:flex;gap:8px;margin-top:12px}
+.error{color:#ff708d}
+.hidden{display:none}
+.wheel-ctrls{margin-top:10px;display:flex;align-items:center;gap:8px;justify-content:flex-start}
+canvas{display:block;margin:0 auto;border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+footer{margin-top:32px;text-align:center;color:#95a5be}
+footer a{color:#9fc1ff}
