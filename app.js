@@ -44,19 +44,32 @@ const spinResultEl   = document.getElementById('spinResult');
 /* ========= Canvas (Wheel) ========= */
 const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
-const center = { x: canvas.width/2, y: canvas.height/2 };
+
+/* HD ölçek: retina ekranlarda keskin görünsün */
+const BASE = 380;                         // CSS boyutu
+const dpr  = window.devicePixelRatio || 1;
+canvas.width  = BASE * dpr;
+canvas.height = BASE * dpr;
+canvas.style.width  = BASE + "px";
+canvas.style.height = BASE + "px";
+ctx.scale(dpr, dpr);
+
+/* Geometri: merkez ve yarıçaplar */
+const center = { x: BASE/2, y: BASE/2 };
+const R_OUT = 170;   // dış çerçeve yarıçapı
+const R_SEG = 156;   // dilim yarıçapı
 let wheelAngle = 0;
 
-/* Daha zengin renk paleti */
+/* Zengin renk paleti */
 const colors = [
   "#4f7cff","#7aa2ff","#3b5bd6","#263fa3",
   "#34b3a0","#5ad1bf","#228a7b","#17635a"
 ];
 
-/* Ses: kısa bir “tick” (isteğe bağlı). tick.mp3 koyarsan otomatik çalar. */
+/* Ses (isteğe bağlı): kısa “tick” dosyası koyarsan çalar */
 let tickSound = null;
 try {
-  tickSound = new Audio("./tick.mp3"); // 80–120ms kısa ses önerilir
+  tickSound = new Audio("./tick.mp3"); // ~100ms kısa ses önerilir
   tickSound.volume = 0.5;
 } catch (_) { /* sessiz mod */ }
 
@@ -65,24 +78,23 @@ function playTick() {
   try { tickSound.currentTime = 0; tickSound.play(); } catch (_) {}
 }
 
-/* Yüksek kalite çizim */
+/* ========= Çizim ========= */
 function drawWheel(angle = 0) {
   const n = WHEEL_SEGMENTS.length;
   const step = (Math.PI*2)/n;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,BASE,BASE);
 
-  // dış gölge
+  // dış çerçeve (altın)
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,.45)";
-  ctx.shadowBlur = 22;
+  ctx.shadowBlur = 18;
   ctx.shadowOffsetY = 8;
 
-  // dış çerçeve (altın halka)
   ctx.beginPath();
-  ctx.arc(center.x, center.y, 185, 0, Math.PI*2);
+  ctx.arc(center.x, center.y, R_OUT, 0, Math.PI*2);
   ctx.fillStyle = "#0c1222";
   ctx.fill();
-  ctx.lineWidth = 14;
+  ctx.lineWidth = 12;
   ctx.strokeStyle = "#ffd54d";
   ctx.stroke();
   ctx.restore();
@@ -90,29 +102,23 @@ function drawWheel(angle = 0) {
   // dilimler
   for (let i=0;i<n;i++){
     const start = i*step + angle;
-    const end = start + step;
+    const end   = start + step;
 
-    // gradient
     const grad = ctx.createLinearGradient(
-      center.x + Math.cos(start)*160, center.y + Math.sin(start)*160,
-      center.x + Math.cos(end)*160,   center.y + Math.sin(end)*160
+      center.x + Math.cos(start)*R_SEG,
+      center.y + Math.sin(start)*R_SEG,
+      center.x + Math.cos(end)*R_SEG,
+      center.y + Math.sin(end)*R_SEG
     );
     grad.addColorStop(0, colors[i % colors.length]);
     grad.addColorStop(1, "#0b1330");
 
     ctx.beginPath();
     ctx.moveTo(center.x, center.y);
-    ctx.arc(center.x, center.y, 170, start, end);
+    ctx.arc(center.x, center.y, R_SEG, start, end);
     ctx.closePath();
     ctx.fillStyle = grad;
     ctx.fill();
-
-    // iç ayırıcı çizgi
-    ctx.strokeStyle = "rgba(255,255,255,.15)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, 170, end, end+0.001);
-    ctx.stroke();
 
     // label
     ctx.save();
@@ -123,27 +129,27 @@ function drawWheel(angle = 0) {
     ctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.shadowColor = "rgba(0,0,0,.35)";
     ctx.shadowBlur = 6;
-    ctx.fillText(WHEEL_SEGMENTS[i].label, 150, 6);
+    ctx.fillText(WHEEL_SEGMENTS[i].label, R_SEG - 10, 6);
     ctx.restore();
   }
 
   // merkez kapak
   ctx.beginPath();
-  ctx.arc(center.x, center.y, 48, 0, Math.PI*2);
-  const capGrad = ctx.createRadialGradient(center.x, center.y, 6, center.x, center.y, 48);
-  capGrad.addColorStop(0, "#ffffff");
-  capGrad.addColorStop(1, "#c7d1ff");
-  ctx.fillStyle = capGrad;
-  ctx.fill();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "#7aa2ff";
-  ctx.stroke();
+  ctx.arc(center.x, center.y, 46, 0, Math.PI*2);
+  const cap = ctx.createRadialGradient(center.x, center.y, 6, center.x, center.y, 46);
+  cap.addColorStop(0, "#fff");
+  cap.addColorStop(1, "#c7d1ff");
+  ctx.fillStyle = cap; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = "#7aa2ff"; ctx.stroke();
 
-  // pointer (sabit üçgen – üstte)
+  /* ===== Sabit iğne (pointer) – görünür garantisi ===== */
+  const tipY  = center.y - (R_OUT - 2);    // ucu çerçevenin hemen içi
+  const baseY = center.y - (R_OUT - 24);   // taban üçgeni için
+
   ctx.beginPath();
-  ctx.moveTo(center.x, center.y-198);
-  ctx.lineTo(center.x-16, center.y-226);
-  ctx.lineTo(center.x+16, center.y-226);
+  ctx.moveTo(center.x, tipY);
+  ctx.lineTo(center.x - 16, baseY);
+  ctx.lineTo(center.x + 16, baseY);
   ctx.closePath();
   ctx.fillStyle = "#ff5959";
   ctx.fill();
@@ -151,9 +157,9 @@ function drawWheel(angle = 0) {
   ctx.strokeStyle = "#fff";
   ctx.stroke();
 
-  // pointer taban daire
+  // iğne pimi
   ctx.beginPath();
-  ctx.arc(center.x, center.y-206, 8, 0, Math.PI*2);
+  ctx.arc(center.x, baseY + 2, 7, 0, Math.PI*2);
   ctx.fillStyle = "#ffe082";
   ctx.fill();
   ctx.strokeStyle = "#fff";
@@ -176,7 +182,6 @@ async function animateToSegment(index) {
   const duration   = 4200;
 
   let startTime;
-  // tick için son görülen dilim
   let lastTick = -1;
 
   return new Promise((resolve)=>{
