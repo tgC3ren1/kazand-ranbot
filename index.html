@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Günlük Çark | Puan Topla</title>
   <meta name="description" content="Günlük enerji ile çarkı çevir, puan topla, liderboard'a gir ve marketten alışveriş yap!" />
-  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="./assets/js/supabaseClient.js"></script>
-  <script defer src="./assets/js/app.js"></script>
+  <script defer src="./supabaseClient.js"></script>
+  <script defer src="./app.js"></script>
 </head>
 <body>
   <header class="container">
@@ -29,7 +29,7 @@
       <canvas id="wheelCanvas" width="360" height="360"></canvas>
       <div class="wheel-ctrls">
         <button id="spinBtn" class="btn primary">Çevir</button>
-        <div id="energyInfo" class="pill">Enerji: <span id="energyVal">0</span></div>
+        <div class="pill">Enerji: <span id="energyVal">0</span></div>
       </div>
       <p id="spinResult" class="result"></p>
     </section>
@@ -95,7 +95,7 @@
   </dialog>
 
   <footer class="container">
-    <a href="./admin/">Yönetim Paneli</a>
+    <a href="./admin.html">Yönetim Paneli</a>
   </footer>
 </body>
 </html>
