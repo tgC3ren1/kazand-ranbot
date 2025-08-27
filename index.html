@@ -3,63 +3,99 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Yönetim Paneli</title>
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <title>Günlük Çark | Puan Topla</title>
+  <meta name="description" content="Günlük enerji ile çarkı çevir, puan topla, liderboard'a gir ve marketten alışveriş yap!" />
+  <link rel="stylesheet" href="./assets/css/styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="../assets/js/supabaseClient.js"></script>
-  <script defer src="./admin.js"></script>
+  <script defer src="./assets/js/supabaseClient.js"></script>
+  <script defer src="./assets/js/app.js"></script>
 </head>
 <body>
   <header class="container">
     <div class="brand">
-      <h1>Admin</h1>
-      <p>Kullanıcı verileri, market yönetimi ve spin hakkı tanımlama</p>
+      <h1>Çark Puan</h1>
+      <p>Günlük enerji ile çarkı çevir ve kazan!</p>
     </div>
     <nav>
-      <a class="btn ghost" href="../">← Siteye Dön</a>
+      <button id="openLogin" class="btn ghost">Giriş</button>
+      <button id="openRegister" class="btn">Kayıt Ol</button>
+      <button id="logoutBtn" class="btn danger hidden">Çıkış</button>
     </nav>
   </header>
 
   <main class="container grid">
     <section class="card">
-      <h2>Admin Kimliği</h2>
-      <p>Giriş yapan: <strong id="adminEmail">-</strong></p>
-      <p>Yetki: <strong id="adminRole">-</strong></p>
-      <p id="adminError" class="error"></p>
+      <h2>Çark</h2>
+      <canvas id="wheelCanvas" width="360" height="360"></canvas>
+      <div class="wheel-ctrls">
+        <button id="spinBtn" class="btn primary">Çevir</button>
+        <div id="energyInfo" class="pill">Enerji: <span id="energyVal">0</span></div>
+      </div>
+      <p id="spinResult" class="result"></p>
     </section>
 
     <section class="card">
-      <h2>Kullanıcı Verileri (CSV)</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <label>Başlangıç Tarihi <input id="fromDate" type="date" /></label>
-        <label>Bitiş Tarihi <input id="toDate" type="date" /></label>
-        <button id="exportBtn" class="btn">CSV İndir (gsm+mail)</button>
-      </div>
-      <div id="exportCount" style="margin-top:8px"></div>
+      <h2>Profil</h2>
+      <p>Kullanıcı: <strong id="usernameLabel">-</strong></p>
+      <p>Puanın: <strong id="myPoints">0</strong></p>
+      <p>Bugün durum: <span id="todayStatus">-</span></p>
     </section>
 
     <section class="card">
-      <h2>Market Yönetimi</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <input id="mName" placeholder="Ürün adı" />
-        <input id="mPrice" type="number" placeholder="Fiyat (puan)" />
-        <input id="mStock" type="number" placeholder="Stok" />
-        <input id="mImage" placeholder="Görsel URL (opsiyonel)" />
-        <label><input id="mActive" type="checkbox" checked /> Aktif</label>
-        <button id="addItemBtn" class="btn">Ekle</button>
-      </div>
-      <div id="adminMarketList" class="market"></div>
+      <h2>Lider Tablosu (Top 10)</h2>
+      <ol id="leaderboardList" class="lb"></ol>
     </section>
 
     <section class="card">
-      <h2>Spin Hakkı Tanımla</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <input id="targetUserId" placeholder="Kullanıcı ID (boşsa tümü)" />
-        <input id="grantCount" type="number" value="1" min="1" />
-        <button id="grantBtn" class="btn">Hakkı Tanımla</button>
-      </div>
-      <p id="grantMsg"></p>
+      <h2>Market</h2>
+      <div id="marketList" class="market"></div>
     </section>
   </main>
+
+  <!-- Register Modal -->
+  <dialog id="registerModal">
+    <form method="dialog" class="modal">
+      <h3>Hesap Oluştur</h3>
+      <label>Kullanıcı Adı
+        <input id="regUsername" type="text" required minlength="3" maxlength="20" />
+      </label>
+      <label>GSM (E.164 formatı, ör. +905551112233)
+        <input id="regGsm" type="tel" required placeholder="+905..." />
+      </label>
+      <label>E-posta
+        <input id="regEmail" type="email" required />
+      </label>
+      <label>Şifre
+        <input id="regPassword" type="password" required minlength="6" />
+      </label>
+      <div class="modal-actions">
+        <button id="registerBtn" class="btn primary">Kayıt Ol</button>
+        <button class="btn ghost" value="cancel">İptal</button>
+      </div>
+      <p id="registerError" class="error"></p>
+    </form>
+  </dialog>
+
+  <!-- Login Modal -->
+  <dialog id="loginModal">
+    <form method="dialog" class="modal">
+      <h3>Giriş Yap</h3>
+      <label>E-posta
+        <input id="loginEmail" type="email" required />
+      </label>
+      <label>Şifre
+        <input id="loginPassword" type="password" required />
+      </label>
+      <div class="modal-actions">
+        <button id="loginBtn" class="btn primary">Giriş</button>
+        <button class="btn ghost" value="cancel">İptal</button>
+      </div>
+      <p id="loginError" class="error"></p>
+    </form>
+  </dialog>
+
+  <footer class="container">
+    <a href="./admin/">Yönetim Paneli</a>
+  </footer>
 </body>
 </html>
